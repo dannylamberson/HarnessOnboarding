@@ -27,16 +27,6 @@ works: every idea becomes one card, each card flows through five fixed stages
 (**Scope → POC → Implement → QA → Document**) with a hotfix shortcut, and documentation
 loops back so the project's context compounds over time.
 
-## The harness in one picture
-
-```
-   Persistent context  ──────────────────────────────┐
-   (this skill + CLAUDE.md, read every session)       │ knowledge
-                                                       │ loops back
-   Backlog → Scope → POC → Implement → Preview → QA → Ship → Document ┘
-   (task board)        (version control / hosting / backend, per your choices)
-```
-
 ## Install
 
 This repo is the skill. The folder you install is `harness-onboarding/`.
