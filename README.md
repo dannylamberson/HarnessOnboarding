@@ -4,7 +4,7 @@ A Claude skill that interviews you about a software project and generates a **ta
 pipeline skill** for it — your own repeatable, ticket-driven build process
 
 It's the "set up the harness for me" companion to the workflow described in
-[Don't Prompt and Pray — Build Like a Dev Team](https://ddbbll.me). The barrier to
+[Don't Prompt and Pray — Build Like a Dev Team](https://ddbbll.me/downloads/the-harness?utm_source=github). The barrier to
 building software dropped; the discipline got more important. This skill installs that
 discipline into any new project in a few minutes.
 
