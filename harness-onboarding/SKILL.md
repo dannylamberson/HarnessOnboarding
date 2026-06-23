@@ -72,7 +72,10 @@ These are what make the harness work rather than just look like process. Preserv
 - **One card = one feature = one session.** Bundling is what creates un-debuggable messes. The generated skill should push back on bundling.
 - **The human runs QA.** Claude implements; the user verifies on a real preview and reports back. Never declare something done off a green build alone.
 - **Preview before production.** Work is reviewed on a preview/staging target; production ships only after sign-off.
-- **Confirm before advancing** a card between stages, and before any bulk or destructive action.
+- **Confirm before advancing** a card between stages should call `ask_user_input_v0` with 2 button options:
+   - "Proceed" — move to next stage
+   - "Pause" — wait for further instructions before moving
+   - (The "Other" field is for optional notes e.g. "Yes proceed, and...")
 - **Document in the most specific place.** Findings and patterns go in the nearest `CLAUDE.md`, not a growing root file — this is the loop that makes knowledge compound.
 - **Keep the five stages + the hotfix path.** Don't let a generated skill silently skip stages; small fixes use the hotfix shortcut, everything else runs the pipeline.
 
