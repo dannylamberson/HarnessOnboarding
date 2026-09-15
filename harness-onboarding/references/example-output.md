@@ -1,134 +1,118 @@
-# Example — a filled-in generated skill
+# Worked example — a real filled-in harness
 
-A worked example so you can see the target. This is what the generator produced for a
-fictional project after an interview. It is illustrative, not a fixed format — adapt to
-the real answers.
+Excerpts from the project this harness was extracted from: a collaborative music-sharing automation, roughly 150 shipped cards, running this pipeline daily. Use it to calibrate **how specific** a filled-in placeholder should be.
 
-## The interview answers (summary)
+The recurring lesson across all of it: **every rule that stuck carries its evidence.** Vague guidance gets reasoned away.
 
-- Project: "Trailhead" — a hiking-route discovery web app. Goal: let local hikers find
-  and save routes; eventually monetize with a pro tier.
-- Type: web app (React/Next.js).
-- Board: Linear (already connected). Repo: GitHub `casey/trailhead`, prod branch `main`.
-- Hosting: Vercel (preview deploy per push). Backend: Supabase (routes + auth).
-- Analytics: PostHog. Build gate: `npm run lint && npm run test && npm run build`.
-- Context folders: `app/`, `components/`, `lib/`.
-- Extra context: solo developer; keep the free tier; never expose the Supabase service
-  key client-side; design must stay mobile-first.
+## `{{PATH_ROUTING_TABLE}}` — the one every stage reads
 
-## The generated `trailhead-pipeline/SKILL.md`
+```markdown
+| Changed path                | Context file        | Persona(s)                                      |
+| --------------------------- | ------------------- | ----------------------------------------------- |
+| `lib/**`                    | `lib/CLAUDE.md`     | `db-architect` if schema is involved             |
+| `netlify/functions/**`      | `netlify/CLAUDE.md` | `security-reviewer`                             |
+| `public/**`                 | `public/CLAUDE.md`  | `ux-web`                                        |
+| `scripts/**`, `.github/**`  | `scripts/CLAUDE.md` | `infra`                                         |
+| `docs/migrations/**`        | `lib/CLAUDE.md`     | `db-architect` + `security-reviewer` if new RLS |
+| anything touching auth      | —                   | `security-reviewer`                             |
+```
 
-~~~markdown
----
-name: trailhead-pipeline
-description: "Workflow guide for building Trailhead (a hiking-route discovery web app) through a five-stage pipeline (Backlog, Scoping, POC, Implementation, QA, Documentation, Shipped) on Linear. Use whenever Casey wants to pick up a task, work on the next card, advance a phase, complete a subtask, asks what's next on Trailhead, mentions a card slug, wants a quick hotfix, or talks about the casey/trailhead repo, the Supabase data, the Vercel deploys, or Trailhead generally. Enforces one card per session, the hotfix shortcut, and how to update Linear and GitHub after each subtask."
----
+Note the last row: a *condition*, not a path. Some routing is content-triggered and can't be expressed as a glob — the version of this table that keyed database review off a label instead missed 5 of 9 migration-writing cards.
 
-# Trailhead pipeline
+## `{{POC_TABLE}}` — tuned to project type
 
-A hiking-route discovery web app. Goal: help local hikers find and save routes; later, a
-pro tier.
+```markdown
+| Task type                | POC looks like                                                    |
+| ------------------------ | ----------------------------------------------------------------- |
+| New page or UI section   | Static mock of the layout, reviewed locally; placeholder content   |
+| Visual/styling change    | Apply to one representative component, eyeball the direction       |
+| New API route / function | Write it, run locally, hit it once, confirm the response shape     |
+| Schema change            | Apply locally first, query it back, then apply to the shared target |
+| External API integration | A throwaway script that makes one real call and logs the result    |
+| Scheduled job            | Run the entry point by hand with a fixed input                     |
+```
 
-This skill governs all work on Trailhead. Each idea is one issue on Linear; issues flow
-through five fixed stages, one issue per session.
+Six rows, each naming a concrete action. "Build a small version" would have been useless.
 
-## Stack
+## `{{BUILD_VERIFY_METHOD}}` — the one people skip
 
-- Type: web app (Next.js, TypeScript)
-- Code: GitHub `casey/trailhead`, production branch `main`
-- Hosting: Vercel — preview per push (vercel.app preview URLs), production at trailhead.app
-- Backend/data: Supabase (Postgres + auth)
-- Analytics: PostHog
-- Build/test gate: `npm run lint && npm run test && npm run build`
+```markdown
+Fetch `https://<prod-url>/build-meta.json` with a cache-buster and confirm its
+`commitRef` matches the commit you pushed.
 
-## Project context
+This exists because every production build from 2026-07-28 to 2026-08-01 failed
+on the secrets scanner and two ships silently no-opped — the merge, CI run, and
+push all looked healthy while nothing published.
+```
 
-Solo developer; keep everything on free tiers where possible. The Supabase service key
-must never reach the client — read it only server-side. Design is mobile-first; check
-small screens before desktop.
+The second paragraph is why the check survives. Without it, a future session reads a fiddly extra step and skips it.
 
-## Core principles
+## A `{{PROJECT_GOTCHAS}}` entry
 
-- One issue = one feature = one session. Push back on bundling.
-- Casey runs QA on the Vercel preview, then reports back. Never call it done off a build alone.
-- Confirm before advancing an issue or doing anything bulk/destructive.
-- Knowledge compounds: the Document stage writes findings back into CLAUDE.md.
+```markdown
+- **A bare-ownership RLS `UPDATE` policy only gates which row, never which
+  column — column-level `GRANT`s do that.** `profiles.is_god_mode` was
+  self-grantable by any signed-in user because `authenticated` held table-default
+  `UPDATE` on every column while the policy only checked row ownership. Before
+  adding a sensitive or role-ish column to any table with this ownership pattern,
+  check its column grants, not just its RLS policy.
+```
 
-## Pipeline stages
+The shape: **what goes wrong → why it wasn't obvious → what to do instead.** Note it doesn't just describe the bug; it names the check to run next time. A gotcha that only describes a past incident teaches nothing.
 
-| Stage (Linear status) | Subtask | Meaning |
-| --- | --- | --- |
-| Backlog | (not started) | Captured idea |
-| Scoping | 1. Scope | Spec the idea |
-| POC | 2. POC | Smallest proof it works |
-| Implementation | 3. Implement | Production build |
-| QA | 4. QA | Casey reviews the preview |
-| Documentation | 5. Document | Write knowledge back |
-| Shipped | (done) | Live and documented |
+## `{{ESTIMATE_RUBRIC}}`
 
-Every issue has five sub-issues: 1. Scope, 2. POC, 3. Implement, 4. QA, 5. Document. The
-issue's status tells you which to work on. Never skip stages.
+```markdown
+| Estimate | Means                                                           |
+| -------- | --------------------------------------------------------------- |
+| 1        | One file, no schema, no new surface. An hour                     |
+| 2        | A few files in one folder, or one new small function             |
+| 3        | Crosses folders, or adds a migration                             |
+| 5        | New user-facing surface with backend work                        |
+| 8        | Should probably be split — use it as a signal, not a size        |
+```
 
-## Startup routine — every session
+The last row does real work: it turns the top of the scale into a prompt to reconsider.
 
-1. Read `CLAUDE.md` and the sub-CLAUDE.md for the area you're touching (app/, components/, lib/).
-2. Confirm the target issue. If asked "what's next," take the lowest non-Backlog status.
-3. Read the issue (description, sub-issues, comments). Respect any "Blocked by:".
-4. Restate the plan in one sentence and wait for Casey's OK.
+## `{{UNIVERSAL_RULES}}` — two representative entries
 
-## Per-subtask playbook
+```markdown
+- Always `await` side effects before returning; the runtime kills unawaited promises
+- **Rate-limit failures are not "no result" — never record them as one.** A quota
+  or 429 failure means the lookup never ran; marking the row checked retires it
+  from the retry pool permanently and the data is lost silently. Use a deferred
+  marker that a scheduled job clears.
+```
 
-### 1. Scope
-No code. Post a spec comment: problem, success criteria, dependencies, open questions.
-Resolve questions with Casey. Done when posted and approved.
+The first is one line because it needs one. The second is long because the failure is silent, and a short version wouldn't survive contact with someone who hasn't seen it happen. **Length should track how non-obvious the rule is**, not a house style.
 
-### 2. POC
-Smallest testable proof for a web app:
-| Task | POC |
-| --- | --- |
-| New page/section | Static mock reviewed at localhost; placeholder content |
-| Supabase query/schema | Apply on a branch DB; confirm shape; service key stays server-side |
-| Map/route UI | One route rendered on the map with no console errors |
-| Auth flow | One round-trip sign-in against Supabase, confirmed locally |
-Done when the core mechanic works in one real scenario Casey can see.
+## What a mature root `CLAUDE.md` looks like
 
-### 3. Implement
-Production code to conventions in CLAUDE.md. Supabase service key server-side only. New
-env vars in `.env.example` and Vercel (Preview + Production) and GitHub secrets if CI
-needs them. Instrument meaningful actions with a PostHog `[object]_[verb]` event. Build on
-a feature branch; Vercel makes the preview. Done when `npm run lint && npm run test &&
-npm run build` passes, a PR is open and linked on the Linear issue, and the preview is live.
+At ~150 shipped cards, with active budget discipline:
 
-### 4. QA
-Share the Vercel preview URL. Tell Casey what to check, mobile first. Fix bugs in the same
-branch and re-push. After sign-off, rebase if `main` moved, merge, confirm trailhead.app.
+| Section                     | Size                                                   |
+| --------------------------- | ------------------------------------------------------ |
+| Project + stack + layout    | ~2,000 chars                                            |
+| Commands + env var names    | ~1,200                                                  |
+| Universal rules             | ~4,000 — the largest section, and correctly so          |
+| Pointers to sub-files/docs  | ~2,500                                                  |
+| Shipped list (slugs only)   | ~2,000 for 150 features                                 |
+| Project-wide gotchas        | ~6,000                                                  |
 
-### 5. Document
-Update the most specific CLAUDE.md (app/, components/, lib/). Root CLAUDE.md only for
-project-wide rules or the Shipped list.
+Two things to copy: the shipped list is **slugs only** — full descriptions live in `docs/feature-history.md`, which is never loaded by default — and rules plus gotchas are two-thirds of the file. That ratio is the sign of a healthy root context file. When history or reference material starts crowding them out, it's time for a split.
 
-## Hotfix path
-For small, unambiguous fixes: a `[hotfix]` Linear issue (no sub-issues, skip Scope/POC),
-fix on a branch, PR + Vercel preview + Casey's QA, then merge. Not for auth, the Supabase
-schema, secrets, or deploy config — those run the full pipeline.
+## What the stage skills settled at
 
-## Advancing an issue — confirm first
-Preview the move (sub-issue complete, status change, flags like new Vercel env vars), get
-an OK, then update Linear.
+| File                       | Size        |
+| -------------------------- | ----------- |
+| `docs/pipeline-core.md`    | ~13,700     |
+| `pipeline-groom/SKILL.md`  | ~13,700     |
+| `pipeline-poc/SKILL.md`    | ~8,400      |
+| `pipeline-implement`       | ~5,900      |
+| `pipeline-qa`              | ~6,000      |
+| `pipeline-document`        | ~9,200      |
+| `pipeline-ship`            | ~11,200     |
 
-## Git workflow
-Stage specific files only; commit `type(scope): ...` with scope = issue slug; push the
-branch; open a PR linking the Linear issue; post the PR link on the issue; merge to `main`
-after sign-off.
+Compare with the monolith they replaced: **21,346 chars, reloaded in full on every invocation.** Now only core plus the one relevant stage loads.
 
-## Guardrails
-One issue per session; don't skip stages; respect blockers; read CLAUDE.md first; Supabase
-service key server-side; Vercel preview for QA, production after sign-off; confirm before
-advancing; Casey runs QA; document in the right CLAUDE.md; capture findings as comments.
-~~~
-
-Notice what the generator did: kept the five-stage backbone and every guardrail, but
-mapped them onto Linear's vocabulary (issues/sub-issues/status), wired in the real
-commands and URLs, tailored the POC table to a web app with Supabase, and folded the
-Phase-4 context (free tier, server-side key, mobile-first) into a project-context block
-and the relevant stages.
+Groom and ship are the largest because they carry genuinely stage-specific machinery — a selection rubric, a batch sequence. Implement and QA are small because most of what they need is shared and lives in core. **If a stage skill starts growing, check whether what's growing actually belongs in core.**

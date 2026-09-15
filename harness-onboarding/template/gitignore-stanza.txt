@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Append this to the project's .gitignore.
+#
+# WHY THE ODD SHAPE: git will not descend into an excluded directory, so a bare
+# `.claude/` would make the negation lines below unreachable and the authored
+# pipeline skills would silently never be tracked — absent from every other
+# clone, and invisible in every PR that changes them.
+#
+# Hence exclude-contents-then-negate: `.claude/*` rather than `.claude/`.
+#
+# IF YOU ADD ANOTHER AUTHORED SKILL, it needs its own negation line or it will
+# silently not be tracked. Verify with:
+#     git check-ignore -v .claude/skills/<your-skill>/SKILL.md
+# No output means it is tracked. Output means it is ignored.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# .claude/ is local harness state (sessions, worktrees, local perms) — except
+# the authored pipeline stage skills, which are project context and must be
+# versioned.
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/pipeline-*/
+
+# Local settings and session state that must stay ignored
+.claude/settings.local.json
+.claude/worktrees/
+.claude/projects/
+
+# Harness-internal artifacts — never part of the deployed codebase
+*.skill
+.mcp.json

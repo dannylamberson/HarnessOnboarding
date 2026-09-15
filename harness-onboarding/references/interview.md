@@ -1,92 +1,74 @@
 # The interview
 
-Run this with the user to collect everything the generated `[slug]-pipeline` skill
-needs. Keep it conversational: ask in small batches, recommend a default for each
-question so a non-expert can just say "sounds good," and reflect answers back. You do
-not need every field — if something doesn't apply, note it and move on.
+Collect what's needed to fill the placeholders in `template/SETUP.md`. Keep it conversational: ask in small batches, recommend a default for each question so a non-expert can just say "sounds good," and reflect answers back.
 
-The goal is to come out with a filled-in version of the placeholder legend in
-`references/skill-template.md`.
+**The interview is short now.** The harness itself is already written — it lives in `template/`. You're filling blanks in a structure that exists, not designing one from scratch. If you find yourself asking a question whose answer doesn't map to a placeholder in `SETUP.md`, you probably don't need to ask it.
 
-## Phase 0 — Scratch or existing? (ask this first)
+## Phase 0 — Scratch or existing? (ask first)
 
-> "Are we starting this project from scratch, or setting the harness up on an existing
-> codebase?"
+> "Are we starting from scratch, or setting the harness up on an existing codebase?"
 
-**If existing:** this is the high-leverage branch. Offer to look at the repo before
-asking much else.
+**If existing** — the high-leverage branch. Offer to read the repo before asking much else:
 
 - Ask for the repo path or URL.
-- Read it the way `references/tool-roles.md` → "Detecting what's available" describes:
-  manifest/lock files, CI config, deploy config, any existing `CLAUDE.md`, the folder
-  layout, the test/lint/build scripts.
-- Summarize back what you found — stack, hosting, test commands, conventions — and ask
-  the user to correct anything. This pre-fills most of Phase 2 and 3, so you can skip
-  questions you've already answered from the repo.
+- Read it per `tool-roles.md` → "Detecting what's already available".
+- Summarize back what you found — stack, hosting, test commands, folder layout, conventions — and ask them to correct it.
 
-**If from scratch:** you'll lean more on recommendations. Note that some pieces (the
-repo, the board, hosting) don't exist yet — the wrap-up checklist will tell the user to
-create them.
+This pre-fills most of Phase 2 and nearly all of Phase 3. Skip the questions you've already answered.
+
+**If from scratch** — lean on recommendations. Note that the repo, the Linear team, and hosting don't exist yet; the wrap-up checklist will cover creating them.
 
 ## Phase 1 — Project basics
 
-- **Name** — human-readable (e.g. "Acme Billing Portal").
-- **Slug** — kebab-case, short; becomes the skill name `[slug]-pipeline` and the commit
-  scope. Propose one from the name and confirm.
-- **One-line description** — what it is.
-- **The ultimate goal** — what success looks like. This matters: it steers tool
-  recommendations (a content/marketing site, a SaaS with logins, an internal tool, and a
-  CLI library each want a different stack).
-- **Project type** — pick the closest: web app, static/content site, backend/API
-  service, CLI or library, data/automation/bot, mobile. Drives the POC examples and the
-  hosting/backend recommendations.
+- **Name** — human-readable.
+- **Slug** — kebab-case, short. Propose one from the name and confirm.
+- **Who runs QA** — a name, not "the user." It goes into every stage skill, and "Danny triggers the webhook and reports back" reads very differently from "the user should test it."
+- **One-line description** and **the ultimate goal** — steers the POC table and the tool recommendations.
+- **Project type** — web app, static site, backend service, CLI/library, data/automation, mobile. Drives `{{POC_TABLE}}`.
 
-## Phase 2 — Roles and tools
+## Phase 2 — Tools
 
-For each role, lead with what you detected in step B and what fits their goal, recommend,
-then let them choose. Full catalog and recommendations are in `references/tool-roles.md`.
-Keep the harness decoupled: you're filling a *capability*, and several tools fit each.
+Lead with what you detected, recommend, then let them choose. Catalog in `tool-roles.md`.
 
-- **Task board** (required — the pipeline's spine). Which board will hold the
-  Backlog → Shipped columns? If they have none and want the lightest path, a tracked
-  markdown backlog file is a valid fallback.
-- **Version control / code host** (required). Where the repo lives; confirm the PR CLI.
-- **Hosting + preview deploys** (required for anything deployable). The critical
-  capability is an automatic preview/staging deploy per branch — that's the QA target.
-- **Backend / database** (optional). Only if the project stores or serves data.
-- **Analytics / observability** (optional). If they want to measure usage or catch errors.
-- **Secrets** (always discuss). Where secrets live for local, runtime, and CI — and
-  reaffirm that secrets never ship to the client.
+- **Linear** — confirm the workspace slug and team key, or note the team needs creating. Not a menu; see `tool-roles.md` if they push back.
+- **Code host** (required) — and confirm the PR CLI, plus how PRs will link to Linear issues.
+- **Hosting + QA target** (required if deployable) — **ask which of the two shapes applies**, preview-per-branch or a long-lived integration branch. This is a real fork that changes the generated git workflow, not an implementation detail.
+- **How production deploys** — auto-publish on push, or a separate gate? If it auto-publishes, the push *is* the deploy and the harness must say so.
+- **How to verify a deploy landed.** Ask it directly. Most people don't have an answer, and the absence is itself worth recording — an unverified ship is the failure mode that looks like success.
+- **Backend/database** (optional) — and if there is one, where authorization lives.
+- **Analytics** (optional).
+- **Secrets** — where they live for local, runtime, and CI.
 
 ## Phase 3 — Workflow specifics
 
-- **Who runs QA and where.** Default and strongly recommended: the human runs QA on a
-  preview/staging URL. Capture the preview URL pattern and the production URL.
-- **Commands.** The lint/test/build commands that gate "Implement done" (e.g. a single
-  combined command). If none yet, note that and keep the gate to "build succeeds."
-- **Branch + deploy model.** Production branch name; how previews are produced; how
-  production deploys (merge-triggered vs. a manual deploy command).
-- **Context-file layout.** Confirm there's a root `CLAUDE.md` and which folders get their
-  own sub-`CLAUDE.md` (e.g. an app folder, a components folder, a server/functions
-  folder). This drives the Document stage's routing table.
+- **Commands** — the lint/test/build command that gates "Implement done." If none yet, keep the gate at "build succeeds" and say so.
+- **Production branch name.**
+- **Context-file layout** — *which folders get their own `CLAUDE.md`?* This drives `{{PATH_ROUTING_TABLE}}`, which every stage reads. Get it explicitly; don't infer it from the folder list alone, since not every folder needs one.
+- **What triggers a security review** — new endpoints? schema changes? anything touching auth? Shapes the `security-reviewer` persona and the Implement stage.
+- **Repo conventions** — module style, HTTP client, test runner, anything a new file must follow.
 
-## Phase 4 — Additional context (ask this near the end)
+## Phase 4 — Extra context (near the end)
 
-> "Anything else you want baked into how the AI works on this project?"
+> "Anything else you want baked into how Claude works on this project?"
 
-Invite them to fold in whatever would make a fresh session smarter or safer:
+- A vision doc, north-star, or roadmap
+- Hard constraints — budget, compliance, platform limits, a known-broken third-party API
+- House conventions not obvious from the repo
+- **Known gotchas or past mistakes.** Push a little here. This is the highest-value question in the interview, because gotchas are the one thing that can't be re-derived from the code. Ask what's bitten them before.
+- Anything Claude should *never* do on this project
 
-- A vision / "big ideas" doc, north-star, or roadmap.
-- Hard constraints (budget, compliance, platform limits, a tool's known gaps).
-- House conventions (naming, code style, commit style) not already obvious from the repo.
-- Known gotchas or past mistakes to avoid.
-- Anything the AI should *never* do on this project.
+Capture these as the seed of `{{PROJECT_GOTCHAS}}` and `{{UNIVERSAL_RULES}}`.
 
-Capture these as a short "project context" block to seed the generated skill and the
-user's root `CLAUDE.md`.
+## Phase 5 — Personas
+
+> "Are there review lenses you want applied at specific stages?"
+
+Most new projects need none on day one, and **speculative personas are context debt that looks like diligence**. Suggest one only where the project obviously calls for it — a `security-reviewer` when there's auth or a public endpoint; a `db-architect` when there's real schema.
+
+Say explicitly that personas are added later, as recurring review comments reveal the need. `docs/personas/README.md` carries the format.
 
 ## After the interview
 
-You should now have enough to fill `references/skill-template.md`. Before generating,
-run step E from `SKILL.md`: restate the plan in one compact summary (project, slug, tool
-per role, QA model, commands, context-file layout) and get an explicit OK.
+Restate in one compact summary: project name and slug, who runs QA, the Linear team, the tool per role, the QA target shape, the commands, and which folders get context files. Get an explicit "looks good" before generating.
+
+This is the cheap moment to catch a wrong assumption.
