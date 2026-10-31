@@ -1,0 +1,6 @@
+{
+  "name": "{{SLUG}}",
+  "version": "1.0.0",
+  "description": "The {{PROJECT_NAME}} pipeline's agents, guard hooks and skills, so they load from any start folder",
+  "author": { "name": "{{OWNER}}" }
+}

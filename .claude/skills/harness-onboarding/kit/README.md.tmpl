@@ -1,0 +1,33 @@
+# {{PROJECT_NAME}}
+
+{{ONE_LINE}}.
+
+## Working on it
+
+All work runs through the `{{SLUG}}-pipeline` Claude Code skill (see `CLAUDE.md`). To start a session, open this
+folder and run:
+
+```
+claude --agent pipeline-lead --effort high
+```
+
+then say **"what's next on {{PROJECT_NAME}}?"**
+
+## The harness on a new machine
+
+The harness (skills, agents, guard hooks) is a Claude Code plugin inside this repo. Install it once per machine, from
+that machine's clone:
+
+```
+claude plugin marketplace add <path to this clone>
+claude plugin install {{SLUG}}@{{SLUG}}-local
+node .claude/hooks/harness-check.mjs
+```
+
+The last line should end `Result: ok`. Updates arrive with `git pull`. Details: `docs/harness-plugin.md`.
+
+## Local setup
+
+{{FILL: prerequisites, install, env file, local database, dev server, gate}}
+
+Live: {{PROD_URL}} · QA: {{QA_URL}}

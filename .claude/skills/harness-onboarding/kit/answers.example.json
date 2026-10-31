@@ -1,0 +1,33 @@
+{
+  "values": {
+    "PROJECT_NAME": "Trailhead",
+    "SLUG": "trailhead",
+    "OWNER": "Danny",
+    "ONE_LINE": "a phone-first trip planner for a small hiking group",
+    "GOAL": "the group plans every trip here instead of a group chat",
+    "PROJECT_TYPE": "web app (PWA)",
+    "REPO": "dannylamberson/trailhead",
+    "PROD_BRANCH": "main",
+    "QA_BRANCH": "staging",
+    "PROD_URL": "https://trailhead.example.com",
+    "QA_URL": "https://trailhead-qa.netlify.app",
+    "PREVIEW": "a Netlify deploy preview per PR, which runs the gate",
+    "BOARD": "Linear, team Trailhead (TRL)",
+    "ISSUE_PREFIX": "TRL",
+    "HOSTING": "Netlify (production from main, the QA site from staging)",
+    "BACKEND": "Supabase project trailhead: Postgres with RLS, Auth",
+    "DEV_CMD": "npm run dev",
+    "GATE_CMD": "npm run check",
+    "QA_BUILD_CHECK": "curl -s \"https://trailhead-qa.netlify.app/build-meta.json?$(date +%s)\" | grep -o '\"commitRef\":\"[0-9a-f]*\"'",
+    "TOKENS_PATH": "src/styles/tokens.css",
+    "FRAMES": "402px phone frames (iPhone 17 Pro)",
+    "DB_LOCAL_CHECK": "supabase db reset && supabase test db",
+    "DB_PUSH_CMD": "supabase db push"
+  },
+  "flags": { "ui": true, "database": true, "delegation": true },
+  "offLimits": [
+    { "pattern": "\\bsupabase\\b.*\\bdb\\s+push\\b", "label": "supabase db push" },
+    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?gh(\\s|$)", "label": "gh" },
+    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?netlify(\\s|$)", "label": "netlify" }
+  ]
+}
