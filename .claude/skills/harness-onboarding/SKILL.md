@@ -1,117 +1,213 @@
 ---
 name: harness-onboarding
-description: Kick off a new software project as an agile product team run with Claude Code. Interview the user about their idea, advise on the stack per role (board, repo, hosting with a QA site, database, analytics, models), walk them through setting each one up, create the GitHub repo, scaffold it with a pipeline harness (a repo-local plugin with the pipeline skill, sketch-first scoping, Opus-plans/Sonnet-builds/Haiku-checks agents, guard hooks, context files and personas), and seed the backlog with the first cards so the next session can start building. Use whenever someone says "I have a new project idea", "start a new project", "kick off a new app", "set up my harness", "make a pipeline for my repo", "onboard this codebase to the pipeline", or wants to run their AI-assisted development like a product team (scope, mockups, prove, implement, QA, document). Also for adding the harness to an existing codebase.
+description: Kick off a new software project as an agile product team run with Claude Code, or onboard an existing codebase. Interviews the user about the idea, advises on the stack, walks them through setting up Linear, the GitHub repo, hosting and the database, then installs a repo-embedded pipeline harness (per-stage skills for groom, scope, poc, implement, qa, document, ship; sketches of new UI at Scope; Opus-plans, Sonnet-builds, Haiku-checks agents behind guard hooks; context files with budgets) and seeds the backlog so the next session can start building. Use whenever someone says "I have a new project idea", "start a new project", "kick off a new app", "set up my harness", "make a pipeline for my repo", "I want the Linear ticket pipeline for this project", or "help me run my project like a dev team".
 ---
 
 # Harness onboarding: the project kickoff
 
-This skill turns a big idea into a project that's ready to build: a board with the first cards on it, a GitHub repo,
-hosting with a QA site, a database if it needs one, and a **harness** committed in the repo. The next session opens
-that repo and picks up the first card.
+This skill starts a project with its product team already in place. It runs a kickoff: interview, set up the tools,
+install a **repo-embedded pipeline harness**, seed the backlog. The project's next session opens the repo and picks up
+the first card.
 
-You are not building the application here. You are **setting up the team and its playbook**.
+You are not building their application. You are installing *the team and the playbook that govern how it gets built*,
+so a fresh session behaves like a disciplined product team instead of a one-prompt gamble.
 
-## The model behind it
+**The model:** the user is the product owner and the customer. They bring ideas, decide, and run QA. Every Claude Code
+session is a new engineer on their first day. The harness is the engineer's **playbook**: the stage skills,
+`docs/pipeline-core.md` and the agents. The context files are **the docs on what's been built so far**. Linear breaks
+ideas into cards. Opus leads (grooms, scopes, sketches, plans, reviews, ships), Sonnet builds, and Haiku checks.
 
-- **The user is the product owner and the customer.** They bring ideas, make decisions, and run QA on a real preview.
-- **Claude Code is the product team.** Every session is a new engineer's first day. The harness is their **playbook**:
-  how the team works, in the pipeline skill, its references, agents and guards. The project's `CLAUDE.md` files and
-  `docs/` are **the docs on what's been built so far**.
-- **A board breaks ideas into chunks.** One card is one feature. Each card goes Scope → POC → Implement → QA →
-  Document, with a hotfix path for small fixes and a maintenance path (one PR, no card) for harness and docs changes.
-- **Roles by model:** Opus leads (scopes, sketches, plans, decides, reviews), Sonnet builds, Haiku runs mechanical
-  checks. Personas are the specialist reviewers.
+**The harness is already written.** It lives in `template/`. Your job is to interview, set up, copy it in, and fill in
+the blanks, not to compose a pipeline from scratch.
 
-Read `references/pipeline-spec.md` before you start: it's the canonical definition, and the scaffolded harness must
-keep its principles, not just its stage names.
+## What gets installed
 
-## How to run it
+Into the user's repo, not their Claude settings:
 
-Talk like a helpful collaborator, not a form. Ask one thing at a time, recommend a default for each question, and
-explain jargon: many users aren't professional engineers. **Confirm before every step that creates something outside
-this computer** (a repo, a board team, a hosting site, a database project), and before anything that costs money. The
-user creates any new account themselves; never sign up for a service on their behalf.
+```
+CLAUDE.md                           root context file
+docs/pipeline-core.md               shared source of truth for every stage
+docs/harness-notes.md               context budgets, what lives where, the maintenance path
+docs/delegation.md                  which model does what, the plan format, the review checklist
+docs/sketches.md                    throwaway HTML sketches of new UI at Scope
+docs/harness-plugin.md              installing the harness on a machine
+docs/changes/README.md              per-card doc fragments
+docs/feature-history.md             written only at ship, by the fold
+docs/personas/README.md             review-lens format
+.claude/skills/pipeline-groom/      ┐
+.claude/skills/pipeline-scope/      │
+.claude/skills/pipeline-poc/        │ one thin skill per stage,
+.claude/skills/pipeline-implement/  │ committed to the repo
+.claude/skills/pipeline-qa/         │
+.claude/skills/pipeline-document/   │
+.claude/skills/pipeline-ship/       ┘
+.claude/agents/                     pipeline-lead (Opus), builder (Sonnet), qa-runner (Haiku),
+                                    doc-writer (Sonnet), context-check (Haiku), context-audit (Sonnet)
+.claude/hooks/                      guard hooks (subagents can't push or deploy) and harness-check.mjs
+.claude/scripts/context-size.mjs    budgets, broken pointers, ships since the last audit
+.claude/harness.json                the guards' forbidden commands, the budgets
+.claude/.claude-plugin/plugin.json  ┐ .claude/ as a plugin, so the agents and guards
+.claude-plugin/marketplace.json     ┘ register from any folder
+```
 
-Keep a running answers file as you go, in the shape of `kit/answers.example.json`, in the scratchpad. It feeds the
-scaffold at step 6.
+Plus a stanza appended to their `.gitignore`.
 
-### 1. The big idea
+**Why in the repo:** the skills are versioned, travel with every clone, get reviewed in the same PR as the code they
+govern, and can't drift out of sync with the project. A harness that lives in someone's personal Claude settings is a
+harness that silently describes a workflow the repo abandoned weeks ago.
 
-Let the user pitch it in their own words. Then fill the gaps: what it's for and what success looks like, who uses it
-and on what (phone, desktop, both), whether it starts from scratch or adapts an existing codebase. For an existing
-codebase, offer to read it first (`references/interview.md` › Phase 0).
+**Why also a plugin:** the plugin is not a second copy. It's the same `.claude/` folder, installed once per machine
+from that machine's own clone and loaded **in place**, so `git pull` updates it. It registers the agents and their
+guard hooks from any start folder, and the startup check (`harness-check.mjs`) proves they're live.
 
-### 2. Interview and advise
+## Read first
 
-Detect what's already connected (`references/tool-roles.md` › Detecting what's available), then run
-`references/interview.md`. For each role, recommend options that fit the goal and what's connected, and let the user
-choose. Roles: board, repo, hosting with a QA site, database, analytics, secrets, and models.
+- `references/pipeline-spec.md`: **why the harness is shaped this way**, and the evidence behind the non-obvious calls.
+  Read before interviewing, so you can explain any part of it and push back when a request would break something
+  load-bearing.
+- `references/context-economy.md`: the half of the harness that isn't the pipeline. Commonly skipped; it's the part
+  that gets discovered late and expensively.
 
-### 3. Confirm the plan
+## The process
 
-One compact summary: the name and slug, the tool per role, the QA site and branch, the gate command, whether there's
-UI (sketches on) and a database, the models, and the commands a builder must never run. Get an explicit "looks good".
-It's the cheap moment to catch a wrong assumption.
+Work through these in order. Talk like a collaborator, not a form: ask one thing at a time, recommend defaults, never
+dump the whole interview at once. Many users are not professional engineers; explain jargon you reach for.
 
-### 4–9. Set it up, in this order
+**Confirm before every step that creates something outside this computer** (a Linear team, a repo, a hosting site, a
+database project), and before anything that costs money. The user creates any new account and signs in themselves.
 
-Follow `references/setup.md`, one step at a time, confirming each:
+### A. The big idea
 
-| # | Step | Why here |
-| --- | --- | --- |
-| 4 | **Board:** the team or project, its stage statuses, the labels | The idea needs somewhere to be broken down before code exists |
-| 5 | **Repo:** create it on GitHub, clone it, `main` plus the QA branch | Hosting and the harness both need it |
-| 6 | **Scaffold:** the app skeleton and gate, then the harness from `kit/` (`references/scaffold.md`); first commit and push | The harness ships with the first commit |
-| 7 | **Install and check:** the plugin on this machine, then `harness-check.mjs` | Proves the next session gets the playbook |
-| 8 | **Hosting:** production from `main`, the QA site from the QA branch, PR previews; first deploy green | Needs the repo. QA needs a preview target |
-| 9 | **Database** (if any): the project, the local stack, env vars into hosting and `.env.example`. No tables yet | Wired once, so cards only add migrations |
+Let them pitch it in their own words. Then frame what they'll get: a few questions, the tools set up, and a working
+pipeline committed into a repo, with the first cards on the board. Confirm they want to proceed.
 
-A step the user would rather do later becomes a line on the step 11 checklist, not a silent skip.
+### B. Detect what's available
 
-### 10. Seed the backlog
+`references/tool-roles.md` › "Detecting what's already available". Check MCP connectors, relevant CLIs (`gh`, the
+hosting and database CLIs), and, for an existing repo, the config files that reveal the stack.
 
-Run the scaffolded intake skill's steps (`.claude/intake/<slug>-scope-intake/SKILL.md` in the new repo) on the big
-idea. The result is ordered, pipeline-sized cards. The first one or two are fully scoped and, if they add UI,
-**sketched**, with the user's pick on the card. Usually the first card is a walking skeleton: the app shell, sign-in if
-there is any, and one real screen.
+**Check for the Linear connector specifically.** If it's absent, say so now: the harness works without it, but every
+stage skill assumes issues can be read and updated from the session, and that becomes manual work.
 
-### 11. Hand off
+### C. Interview
 
-Give the user:
+Run `references/interview.md`. It branches on **scratch vs. existing codebase**, and it's short: you're filling
+blanks, not designing. Keep the answers in a scratchpad file shaped like `template/answers.example.json`; it feeds
+the scaffold in step F.
 
-- **The first-session prompt,** in a copy-paste block: open the new repo, `claude --agent pipeline-lead --effort high`,
-  "what's next?"
-- **The intake skill for claude.ai.** Zip `.claude/intake/<slug>-scope-intake/` and tell them to upload it in claude.ai
-  Settings → Capabilities, so it works in Cowork chat as well as Claude Code. The repo copy stays the source.
-- **The checklist** of anything left by hand (a secret to paste into hosting, a step they deferred).
-- **The reminder** that the playbook is theirs: practices learned on a card go back into the pipeline skill as a
-  maintenance PR. Practices worth sharing across projects go back into this repo's `kit/`.
+Questions the flow deliberately forces, because they change the generated text rather than decorate it:
 
-## Non-negotiables in every scaffolded harness
+- **Which QA-target shape:** preview-per-branch, or a long-lived integration branch. Changes the git workflow and the
+  QA runner.
+- **How to verify a deploy landed.** Most people have no answer. Record the absence rather than leaving it blank.
+- **Does it have UI?** Turns sketches on, and sets the sketch frames and the tokens path.
+- **What may a subagent never run?** The deploy CLI, the database push, `gh`. These become the guards' list.
 
-Adapt the wording to the project's tools, but keep all of these (`references/pipeline-spec.md` explains each):
+### D. Confirm the plan
 
-- **The harness lives in the repo.** Pipeline skill, references, agents, hooks and context files are committed and
-  load from the clone as a plugin. Nothing that governs the pipeline lives only on one machine. (The intake skill is
-  also uploaded to claude.ai, from its repo source.)
-- **One card = one feature = one session.** Push back on bundling.
-- **New UI is sketched at Scope,** before the spec is signed off and before any code or migration. POC builds the
-  picked sketch.
-- **Opus plans and reviews; Sonnet builds; Haiku checks.** Subagents commit locally only. Guard hooks stop them from
-  pushing, deploying or touching the hosted database and the board.
-- **The human runs QA** on the QA site. Never declare done off a green build.
-- **Preview before production.** Production ships only after sign-off.
-- **Confirm before advancing** a card, with buttons (`AskUserQuestion` in Claude Code, `ask_user_input_v0` in
-  claude.ai chat): **Proceed** / **Pause** / **Yes, and…**.
-- **Document in the most specific place,** within budgets, so knowledge compounds.
-- **Five stages, plus the hotfix and maintenance paths.**
+Restate in one compact summary: name and slug, who runs QA, the Linear team, the tool per role, the QA-target shape,
+the commands, the context-file folders, UI or not, the models. Get an explicit "looks good". This is the cheap moment
+to catch a wrong assumption.
+
+### E. Set up the tools
+
+`references/setup.md`, one step at a time, each confirmed: **Linear** (the team, its statuses, its labels) → **the
+repo** (create it on GitHub, clone it) → **hosting** (production, the QA target, a way to read the deployed SHA) →
+**the database**, if any (the project, the local stack, env vars; no tables yet). For an existing project, each step
+shrinks to checking what's there. A step the user defers goes on the wrap-up checklist.
+
+### F. Install the harness
+
+1. **Confirm the target repo path.** For a new project, the app skeleton comes first (`references/setup.md` ›
+   Skeleton), so there's a gate to run.
+2. **Copy `template/` in with the scaffold:**
+   `node <this skill>/template/scaffold.mjs --answers <answers.json> --target <repo>`. It copies the tree (mapping
+   `dot-claude` → `.claude` and dropping `.tmpl`), fills the mechanical placeholders, keeps or drops the optional
+   parts by flag, writes `.claude/harness.json`, appends the gitignore stanza, and lists every placeholder left. It
+   never overwrites an existing file; it lists those for a hand merge.
+3. **Write every placeholder it lists.** The legend is in `template/SETUP.md`. Where something doesn't apply, **delete
+   the section rather than leaving `{{PLACEHOLDER}}` in a live file**: a stale placeholder reads as a fact nobody
+   checked, and later sessions treat it as one.
+4. **Write pushy, project-specific `description` lines** in each stage skill's frontmatter. Name the project, the
+   Linear status, and the phrases the user would actually say. Each under 1024 characters, no angle brackets.
+5. **Verify the harness is tracked.** This is the step that silently fails:
+
+   ```bash
+   git check-ignore -v .claude/skills/pipeline-ship/SKILL.md .claude/agents/builder.md .claude/hooks/agent-guard.mjs .claude/harness.json
+   ```
+
+   **No output means tracked**, which is what you want. Any output means they're ignored and would be absent from
+   every other clone. Fix the gitignore before moving on.
+6. `node .claude/scripts/context-size.mjs` passes. Commit the harness on the production branch and push. Cut the
+   integration branch, if there is one.
+
+Use `references/example-output.md` to calibrate how specific a filled-in placeholder should be.
+
+### G. Install the plugin and check
+
+From the clone: `claude plugin validate .claude`, `claude plugin validate .`, then `claude plugin marketplace add
+<absolute clone path>` and `claude plugin install <slug>@<slug>-local`. Then `node .claude/hooks/harness-check.mjs`
+should end `Result: ok`. If `claude` isn't on the PATH, give the user the commands. A session already running won't
+see the new agents; the next one will.
+
+### H. Seed the backlog
+
+Turn the big idea into cards with `pipeline-core`'s card creation workflow: ordered, one feature each, with `blockedBy`
+relations and a Project when there are three or more. Usually the first is a walking skeleton: the app shell, sign-in
+if there is any, and one real screen. Then **run `pipeline-scope` on the first card**, including its sketch if it adds
+UI, so the user's first build session starts at POC with a picked design.
+
+### I. Wrap up
+
+Give them:
+
+- **The first-session prompt:** open the repo, `claude --agent pipeline-lead --effort high`, "what's next?".
+- **A manual checklist** for what's left: secrets in all three places (local, runtime, CI), a custom domain, any
+  setup step they deferred.
+- **The reminder:** the harness is theirs to evolve. It's in their repo, so a change to it is a maintenance PR
+  (`docs/harness-notes.md` › Maintenance path). A practice worth sharing across projects goes back into this repo's
+  `template/`.
+
+## Non-negotiables to preserve
+
+Full reasoning and evidence in `references/pipeline-spec.md`. Adapt the wording to their tools; don't drop the
+substance:
+
+- **One card = one feature = one session.** But finishing a *stage* is not a reason to end a session.
+- **The human runs QA.** Never simulate end-to-end results.
+- **Confirm before advancing,** with exactly *one* confirmation per decision. The ship gate's single "Ship it" covers
+  the whole sequence.
+- **See it before it's built.** New UI is sketched at Scope, and the user picks before the spec is approved. POC
+  builds the pick.
+- **Opus plans and reviews; Sonnet builds; Haiku checks.** Subagents commit locally only, behind guard hooks.
+- **Document via a fragment,** folded at ship, not direct edits to shared files.
+- **Route from the diff, never from labels.**
+- **The status is the stage.** No subtask checklist.
+- **Branch from production, never from the integration tip.**
+- **Never restate a shared fact in a stage skill.**
+- **Verify the artifact, not the push.**
+- **Harness and docs changes are a maintenance PR, not a card.**
+- **Carry the evidence.** Rules with measurements survive; assertions get reasoned away.
+
+## If they want to deviate
+
+Don't refuse: explain the cost, then build what they asked for. Common ones:
+
+- **A different board.** The principles survive; the mechanics don't. `tool-roles.md` lists what needs rework.
+- **A hotfix lane.** The `type` label approach supersedes it and is better. Explain why, and build the lane if they
+  still want it.
+- **No subagents.** Set `flags.delegation` to false: no agents or guards, and the main session runs every stage.
+  Explain what the plan-and-review split catches.
 
 ## Reference files
 
-- `references/pipeline-spec.md`: the canonical harness: stages, principles, delegation, sketches, the paths. Read first.
-- `references/interview.md`: the question flow (steps 1–2).
-- `references/tool-roles.md`: role catalog, recommendations per role, detecting what's connected (step 2).
-- `references/setup.md`: provisioning each role, in order (steps 4–9).
-- `references/scaffold.md`: filling `kit/` into the new repo, the answers file, what to write by hand (step 6).
-- `references/example-output.md`: a worked kickoff, as a target to aim at.
-- `kit/`: the harness files, with `{{PLACEHOLDERS}}`. `kit/scaffold.mjs` copies them; `kit/scaffold.test.mjs` checks the kit.
+| File | Read it |
+| --- | --- |
+| `references/pipeline-spec.md` | First: the rationale and the non-negotiables |
+| `references/context-economy.md` | First: context budgets, splitting, personas |
+| `references/tool-roles.md` | Steps B and C: roles, detection, Linear setup |
+| `references/interview.md` | Step C: the question flow |
+| `references/setup.md` | Step E: setting up Linear, the repo, hosting and the database; the app skeleton |
+| `references/example-output.md` | Step F: calibration for filled-in placeholders |
+| `template/SETUP.md` | Step F: the copy map, the placeholder legend, the scaffold's flags |
+| `template/scaffold.test.mjs` | After changing the template: `node template/scaffold.test.mjs` |

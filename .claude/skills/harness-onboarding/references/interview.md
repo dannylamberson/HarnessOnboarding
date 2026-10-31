@@ -1,75 +1,78 @@
 # The interview
 
-Run this with the user at kickoff steps 1–2. Keep it conversational: ask in small batches, recommend a default for
-each question so a non-expert can just say "sounds good", and reflect answers back. Skip what doesn't apply.
+Collect what's needed to fill the placeholders in `template/SETUP.md`. Keep it conversational: ask in small batches, recommend a default for each question so a non-expert can just say "sounds good," and reflect answers back.
 
-The goal is a filled answers file in the shape of `kit/answers.example.json` (values, flags, offLimits), kept in the
-scratchpad as you go.
+**The interview is short now.** The harness itself is already written — it lives in `template/`. You're filling blanks in a structure that exists, not designing one from scratch. If you find yourself asking a question whose answer doesn't map to a placeholder in `SETUP.md`, you probably don't need to ask it.
 
-## Phase 0: Scratch or existing? (ask this first)
+## Phase 0 — Scratch or existing? (ask first)
 
-> "Are we starting from scratch, or adding the harness to an existing codebase?"
+> "Are we starting from scratch, or setting the harness up on an existing codebase?"
 
-**Existing:** offer to read the repo before asking much else. Read it as `references/tool-roles.md` › Detecting
-what's available describes (manifests, CI, deploy config, any `CLAUDE.md`, the folder layout, the scripts). Summarize
-what you found and ask the user to correct it. Note where the repo already has its own pipeline skills, context
-files or board conventions: the scaffold merges into those, it doesn't replace them (`references/scaffold.md` ›
-Existing repos). Setup steps 4, 5, 8 and 9 shrink to checking what exists.
+**If existing** — the high-leverage branch. Offer to read the repo before asking much else:
 
-**Scratch:** you'll lean on recommendations, and setup creates the board, repo, hosting and database.
+- Ask for the repo path or URL.
+- Read it per `tool-roles.md` → "Detecting what's already available".
+- Summarize back what you found — stack, hosting, test commands, folder layout, conventions — and ask them to correct it.
 
-## Phase 1: The idea
+This pre-fills most of Phase 2 and nearly all of Phase 3. Skip the questions you've already answered.
 
-- **The pitch,** in the user's words. Don't interrupt it with questions.
-- **Name and slug.** Propose a kebab-case slug of 30 characters or fewer; it names the repo, the plugin, the skills
-  and the commit scope.
-- **One line,** and **the goal:** what success looks like. ("We stop using a group chat for this.") It steers every
-  recommendation.
-- **Who uses it, on what:** phone, desktop or both; one person, a household, a team, the public. This decides the
-  sketch frames, the QA script and whether sign-in matters.
-- **Project type:** web app or PWA, static or content site, API service, bot or automation, CLI or library, mobile.
+**If from scratch** — lean on recommendations. The repo, the Linear team, hosting and the database don't exist yet; step E of the kickoff sets each one up with the user (`setup.md`).
 
-## Phase 2: Roles and tools
+## Phase 1 — Project basics
 
-For each role, lead with what's connected and what fits the goal, recommend, then let them choose. The catalog is in
-`references/tool-roles.md`.
+- **Name** — human-readable.
+- **Slug** — kebab-case, short. Propose one from the name and confirm.
+- **Who runs QA** — a name, not "the user." It goes into every stage skill, and "Danny triggers the webhook and reports back" reads very differently from "the user should test it."
+- **One-line description** and **the ultimate goal** — steers the POC table and the tool recommendations.
+- **Project type** — web app, static site, backend service, CLI/library, data/automation, mobile. Drives `{{POC_TABLE}}`.
 
-- **Board** (required, the pipeline's spine): which tool holds the Backlog → Shipped statuses.
-- **Repo** (required): GitHub by default; confirm `gh` is signed in.
-- **Hosting with a QA site** (required for anything deployable): production from the production branch, a QA site
-  from a QA branch (`staging` by default), and a preview per PR if the host offers it.
-- **Database** (optional): only if the project stores data. Free tier by default.
+## Phase 2 — Tools
+
+Lead with what you detected, recommend, then let them choose. Catalog in `tool-roles.md`.
+
+- **Linear** — confirm the workspace slug and team key, or note the team needs creating. Not a menu; see `tool-roles.md` if they push back.
+- **Code host** (required) — and confirm the PR CLI, plus how PRs will link to Linear issues.
+- **Hosting + QA target** (required if deployable) — **ask which of the two shapes applies**, preview-per-branch or a long-lived integration branch. This is a real fork that changes the generated git workflow, not an implementation detail.
+- **How production deploys** — auto-publish on push, or a separate gate? If it auto-publishes, the push *is* the deploy and the harness must say so.
+- **How to verify a deploy landed.** Ask it directly. Most people don't have an answer, and the absence is itself worth recording — an unverified ship is the failure mode that looks like success.
+- **Backend/database** (optional) — and if there is one, where authorization lives.
 - **Analytics** (optional).
-- **Secrets** (always discuss): local env file, hosting env, CI. Secrets never reach the client.
-- **Models:** the default is Opus leading, Sonnet building, Haiku checking (`references/tool-roles.md` › Role 7).
-  Offer the single-model option for someone who doesn't want subagents; it sets `flags.delegation` to false.
+- **Secrets** — where they live for local, runtime, and CI.
 
-## Phase 3: Workflow specifics
+## Phase 3 — Workflow specifics
 
-- **QA:** who tests (the user, by default and strongly recommended), where (the QA site URL), and on what device.
-- **The gate:** the one command that must pass for "Implement done" (lint + typecheck + test + build). From scratch,
-  the scaffold creates it.
-- **How to prove the QA build is new:** a command that prints the deployed commit SHA (a `build-meta.json` the build
-  writes, or the SHA in a bundle). The QA runner polls it.
-- **UI?** Yes turns sketches on (`flags.ui`). Then: where the design tokens live (`TOKENS_PATH`), and the frame sizes
-  (`FRAMES`, e.g. 402px phone frames, or phone and 1280px desktop).
-- **What must a builder never run?** Default: every `git push`, the deploy CLI, the hosted database push, the code
-  host CLI (`gh`), the board CLI. These become `offLimits` regexes. Pushing the production branch is always on the
-  list, because on most hosts that push *is* the production deploy.
-- **Context folders:** which folders get their own `CLAUDE.md` (an app folder, a components folder, a server folder).
-  They become rows of root's context map.
+- **Commands** — the lint/test/build command that gates "Implement done." If none yet, keep the gate at "build succeeds" and say so.
+- **Production branch name.**
+- **Context-file layout** — *which folders get their own `CLAUDE.md`?* This drives `{{PATH_ROUTING_TABLE}}`, which every stage reads. Get it explicitly; don't infer it from the folder list alone, since not every folder needs one.
+- **What triggers a security review** — new endpoints? schema changes? anything touching auth? Shapes the `security-reviewer` persona and the Implement stage.
+- **Repo conventions** — module style, HTTP client, test runner, anything a new file must follow.
+- **Does it have UI?** Yes turns on sketches at Scope (`flags.ui`). Then: where the design tokens live (`{{TOKENS_PATH}}`; from scratch, the skeleton creates them) and the frame sizes (`{{FRAMES}}`: phone, desktop or both, from who uses it on what).
+- **Models.** The default is Opus leading, Sonnet building, Haiku checking (`tool-roles.md` › Role 8). Offer the single-model option for someone who doesn't want subagents (`flags.delegation`: false).
+- **What may a subagent never run?** Default: the deploy CLI, the hosted database push, `gh`, plus every `git push` (always refused to the builder). These become `offLimits` in the answers file. If pushing the production branch deploys production, say so: it's why the guard exists.
+- **How to read the QA build's commit SHA,** as a shell command (`{{QA_BUILD_CHECK}}`). The QA runner polls it. Usually the same `build-meta.json` as the production check, on the QA URL.
 
-## Phase 4: Additional context (near the end)
+## Phase 4 — Extra context (near the end)
 
-> "Anything else a new engineer on this project should know on day one?"
+> "Anything else you want baked into how Claude works on this project?"
 
-- A vision or big-ideas doc, a north star, reference apps the user likes.
-- Hard constraints: budget, free tier only, platforms, compliance, a tool's known gaps.
-- House conventions not obvious from a repo.
-- Known gotchas, past mistakes, and anything the AI should *never* do here.
+- A vision doc, north-star, or roadmap
+- Hard constraints — budget, compliance, platform limits, a known-broken third-party API
+- House conventions not obvious from the repo
+- **Known gotchas or past mistakes.** Push a little here. This is the highest-value question in the interview, because gotchas are the one thing that can't be re-derived from the code. Ask what's bitten them before.
+- Anything Claude should *never* do on this project
 
-These seed root `CLAUDE.md` › Project rules and Gotchas, and the personas' landmines.
+Capture these as the seed of `{{PROJECT_GOTCHAS}}` and `{{UNIVERSAL_RULES}}`.
+
+## Phase 5 — Personas
+
+> "Are there review lenses you want applied at specific stages?"
+
+Most new projects need none on day one, and **speculative personas are context debt that looks like diligence**. Suggest one only where the project obviously calls for it — a `security-reviewer` when there's auth or a public endpoint; a `db-architect` when there's real schema.
+
+Say explicitly that personas are added later, as recurring review comments reveal the need. `docs/personas/README.md` carries the format.
 
 ## After the interview
 
-Run kickoff step 3: restate the plan in one compact summary and get an explicit OK before setup creates anything.
+Restate in one compact summary: project name and slug, who runs QA, the Linear team, the tool per role, the QA target shape, the commands, and which folders get context files. Get an explicit "looks good" before generating.
+
+This is the cheap moment to catch a wrong assumption.

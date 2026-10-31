@@ -1,112 +1,151 @@
-# Example: a kickoff, start to finish
+# Worked example — a real filled-in harness
 
-A worked example of the target. **Trailhead** is a made-up project; `kit/answers.example.json` holds its answers, and
-`kit/scaffold.test.mjs` scaffolds exactly this.
+Excerpts from the project this harness was extracted from: a collaborative music-sharing automation, roughly 150 shipped cards, running this pipeline daily. Use it to calibrate **how specific** a filled-in placeholder should be.
 
-## 1–3. The idea, the interview, the plan
+The recurring lesson across all of it: **every rule that stuck carries its evidence.** Vague guidance gets reasoned away.
 
-> "My hiking group plans every trip in a group chat and things get lost: who's driving, which trail, what to bring.
-> I want an app on our phones for it."
-
-The confirmed summary:
-
-```
-Trailhead (slug trailhead): a phone-first trip planner for a small hiking group.
-Goal: the group plans every trip here instead of a group chat.
-Users: 6 friends, iPhones, invite-only. From scratch.
-Board: Linear, team Trailhead (TRL)        Repo: GitHub dannylamberson/trailhead (private)
-Hosting: Netlify. Production from main → trailhead.example.com; QA site from staging → trailhead-qa.netlify.app
-Database: Supabase (free tier), Postgres + RLS + Auth. Shared by previews, QA and production → additive migrations
-Gate: npm run check (lint, typecheck, test, build)   QA build check: build-meta.json commitRef
-UI: yes. Sketches at Scope in 402px phone frames, tokens at src/styles/tokens.css
-Models: Opus leads, Sonnet builds, Haiku checks
-Builders may never run: git push, gh, netlify, supabase db push
-QA: Danny, on his iPhone, on the QA site
-```
-
-## 4–9. Setup, as it ran
-
-| Step | What happened |
-| --- | --- |
-| 4 Board | Danny created team Trailhead (TRL) and set its workflow to the eight statuses. The session created `area-ui`, `area-db`, `area-functions`, `area-infra`, `area-harness`, `persona-ux`, `persona-db` |
-| 5 Repo | `gh repo create dannylamberson/trailhead --private --clone` |
-| 6 Scaffold | Vite + React + TypeScript, `npm run check`, a `build-meta.json` step, `tokens.css`. Then `scaffold.mjs`: 35 files, 13 FILL markers written by hand. First commit on `main`, pushed; `staging` cut and pushed |
-| 7 Install | `claude plugin marketplace add …\trailhead`, `claude plugin install trailhead@trailhead-local`; `harness-check.mjs` → `Result: ok` |
-| 8 Hosting | Two Netlify sites from the repo: `trailhead` on `main`, `trailhead-qa` on `staging`. Both green; `build-meta.json` showed the pushed SHA |
-| 9 Database | Danny confirmed the free-tier cost; project `trailhead` created; `supabase init`, `start`, `link`; sign-ups off; both origins in Auth's redirect list. No tables |
-
-## The repo it produced
-
-```
-trailhead/
-├── CLAUDE.md                          # table of contents: stack, commands, context map, rules, gotchas, Shipped
-├── README.md                          # setup, plus the two plugin-install commands for a new machine
-├── .gitignore                         # + .claude/worktrees/, sketches/, env files
-├── .claude-plugin/marketplace.json    # trailhead-local: lists the plugin below
-├── .claude/
-│   ├── .claude-plugin/plugin.json     # the trailhead plugin
-│   ├── harness.json                   # slug, branches, offLimits for the guards, context budgets
-│   ├── agents/                        # pipeline-lead (Opus), builder (Sonnet), qa-runner (Haiku),
-│   │                                  #   doc-writer (Sonnet), context-check (Haiku), context-audit (Sonnet)
-│   ├── hooks/                         # hooks.json → agent-guard → builder-guard / qa-runner-guard; harness-check
-│   ├── scripts/context-size.mjs       # sizes vs budgets, broken pointers, ships since the last audit
-│   ├── skills/trailhead-pipeline/     # the playbook
-│   │   ├── SKILL.md
-│   │   └── references/                # delegation, sketches, poc, qa, hotfix, maintenance, spikes
-│   └── intake/trailhead-scope-intake/ # the front door; also uploaded to claude.ai
-├── docs/
-│   ├── harness-plugin.md  shipped.md  shipped-archive.md  audits.md
-│   └── personas/                      # README (routing), ux, db
-└── src/ …                             # the Vite skeleton
-```
-
-## 10. The backlog it seeded
-
-| # | Slug | Blocked by | Tier |
-| --- | --- | --- | --- |
-| TRL-1 | `app-shell` — installable shell, sign-in, empty trips list | — | A: scoped, sketched (option B picked), in POC |
-| TRL-2 | `trip-create` — create a trip with a date and a trail | `app-shell` | A: scoped, sketched, in Scoping |
-| TRL-3 | `trip-roster` — who's in, who's driving | `trip-create` | B |
-| TRL-4 | `packing-list` — a shared list per trip | `trip-create` | B |
-| TRL-5 | `trail-lookup-spike` — can we pull trail data for free? | — | B (spike) |
-
-## 11. The handoff
-
-```
-Open C:\Users\danny\ClaudeCode\trailhead in Claude Code and run:
-  claude --agent pipeline-lead --effort high
-Then say: "what's next on Trailhead?" (it picks up TRL-1 app-shell at POC)
-```
-
-Plus: `trailhead-scope-intake.zip` to upload in claude.ai Settings → Capabilities, and a checklist with one item left
-(point `trailhead.example.com` at the production site).
-
-## An excerpt of the playbook
-
-From `.claude/skills/trailhead-pipeline/SKILL.md`, Scope:
+## `{{PATH_ROUTING_TABLE}}` — the one every stage reads
 
 ```markdown
-### 1. Scope
-No app code. First **state which paths the work will touch**, as a one-line list: it drives the labels, the personas
-and the spec's dependencies. ...
-
-**New UI gets sketched before sign-off:** throwaway HTML, options side by side, so Danny picks by looking, not by
-reading (`references/sketches.md`). Skip it only when the card reuses existing UI, and say so in the spec.
+| Changed path                | Context file        | Persona(s)                                      |
+| --------------------------- | ------------------- | ----------------------------------------------- |
+| `lib/**`                    | `lib/CLAUDE.md`     | `db-architect` if schema is involved             |
+| `netlify/functions/**`      | `netlify/CLAUDE.md` | `security-reviewer`                             |
+| `public/**`                 | `public/CLAUDE.md`  | `ux-web`                                        |
+| `scripts/**`, `.github/**`  | `scripts/CLAUDE.md` | `infra`                                         |
+| `docs/migrations/**`        | `lib/CLAUDE.md`     | `db-architect` + `security-reviewer` if new RLS |
+| anything touching auth      | —                   | `security-reviewer`                             |
 ```
 
-And `.claude/harness.json`, which the guards read:
+Note the last row: a *condition*, not a path. Some routing is content-triggered and can't be expressed as a glob — the version of this table that keyed database review off a label instead missed 5 of 9 migration-writing cards.
+
+## `{{POC_TABLE}}` — tuned to project type
+
+```markdown
+| Task type                | POC looks like                                                    |
+| ------------------------ | ----------------------------------------------------------------- |
+| New page or UI section   | Static mock of the layout, reviewed locally; placeholder content   |
+| Visual/styling change    | Apply to one representative component, eyeball the direction       |
+| New API route / function | Write it, run locally, hit it once, confirm the response shape     |
+| Schema change            | Apply locally first, query it back, then apply to the shared target |
+| External API integration | A throwaway script that makes one real call and logs the result    |
+| Scheduled job            | Run the entry point by hand with a fixed input                     |
+```
+
+Six rows, each naming a concrete action. "Build a small version" would have been useless.
+
+## `{{BUILD_VERIFY_METHOD}}` — the one people skip
+
+```markdown
+Fetch `https://<prod-url>/build-meta.json` with a cache-buster and confirm its
+`commitRef` matches the commit you pushed.
+
+This exists because every production build from 2026-07-28 to 2026-08-01 failed
+on the secrets scanner and two ships silently no-opped — the merge, CI run, and
+push all looked healthy while nothing published.
+```
+
+The second paragraph is why the check survives. Without it, a future session reads a fiddly extra step and skips it.
+
+## A `{{PROJECT_GOTCHAS}}` entry
+
+```markdown
+- **A bare-ownership RLS `UPDATE` policy only gates which row, never which
+  column — column-level `GRANT`s do that.** `profiles.is_god_mode` was
+  self-grantable by any signed-in user because `authenticated` held table-default
+  `UPDATE` on every column while the policy only checked row ownership. Before
+  adding a sensitive or role-ish column to any table with this ownership pattern,
+  check its column grants, not just its RLS policy.
+```
+
+The shape: **what goes wrong → why it wasn't obvious → what to do instead.** Note it doesn't just describe the bug; it names the check to run next time. A gotcha that only describes a past incident teaches nothing.
+
+## `{{ESTIMATE_RUBRIC}}`
+
+```markdown
+| Estimate | Means                                                           |
+| -------- | --------------------------------------------------------------- |
+| 1        | One file, no schema, no new surface. An hour                     |
+| 2        | A few files in one folder, or one new small function             |
+| 3        | Crosses folders, or adds a migration                             |
+| 5        | New user-facing surface with backend work                        |
+| 8        | Should probably be split — use it as a signal, not a size        |
+```
+
+The last row does real work: it turns the top of the scale into a prompt to reconsider.
+
+## `{{UNIVERSAL_RULES}}` — two representative entries
+
+```markdown
+- Always `await` side effects before returning; the runtime kills unawaited promises
+- **Rate-limit failures are not "no result" — never record them as one.** A quota
+  or 429 failure means the lookup never ran; marking the row checked retires it
+  from the retry pool permanently and the data is lost silently. Use a deferred
+  marker that a scheduled job clears.
+```
+
+The first is one line because it needs one. The second is long because the failure is silent, and a short version wouldn't survive contact with someone who hasn't seen it happen. **Length should track how non-obvious the rule is**, not a house style.
+
+## What a mature root `CLAUDE.md` looks like
+
+At ~150 shipped cards, with active budget discipline:
+
+| Section                     | Size                                                   |
+| --------------------------- | ------------------------------------------------------ |
+| Project + stack + layout    | ~2,000 chars                                            |
+| Commands + env var names    | ~1,200                                                  |
+| Universal rules             | ~4,000 — the largest section, and correctly so          |
+| Pointers to sub-files/docs  | ~2,500                                                  |
+| Shipped list (slugs only)   | ~2,000 for 150 features                                 |
+| Project-wide gotchas        | ~6,000                                                  |
+
+Two things to copy: the shipped list is **slugs only** — full descriptions live in `docs/feature-history.md`, which is never loaded by default — and rules plus gotchas are two-thirds of the file. That ratio is the sign of a healthy root context file. When history or reference material starts crowding them out, it's time for a split.
+
+## What the stage skills settled at
+
+| File                       | Size        |
+| -------------------------- | ----------- |
+| `docs/pipeline-core.md`    | ~13,700     |
+| `pipeline-groom/SKILL.md`  | ~13,700     |
+| `pipeline-poc/SKILL.md`    | ~8,400      |
+| `pipeline-implement`       | ~5,900      |
+| `pipeline-qa`              | ~6,000      |
+| `pipeline-document`        | ~9,200      |
+| `pipeline-ship`            | ~11,200     |
+
+Compare with the monolith they replaced: **21,346 chars, reloaded in full on every invocation.** Now only core plus the one relevant stage loads.
+
+Groom and ship are the largest because they carry genuinely stage-specific machinery — a selection rubric, a batch sequence. Implement and QA are small because most of what they need is shared and lives in core. **If a stage skill starts growing, check whether what's growing actually belongs in core.**
+
+## The scaffold's answers — the mechanical half
+
+From household (a phone-first PWA on Netlify and Supabase, with a `staging` QA site), in the shape of
+`template/answers.example.json`. These are what `scaffold.mjs` fills; everything above is what the session writes.
 
 ```json
-{
-  "slug": "trailhead",
-  "prodBranch": "main",
-  "qaBranch": "staging",
-  "offLimits": [
-    { "pattern": "\\bsupabase\\b.*\\bdb\\s+push\\b", "label": "supabase db push" },
-    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?gh(\\s|$)", "label": "gh" },
-    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?netlify(\\s|$)", "label": "netlify" }
-  ],
-  "budgets": { "root": 8192, "pipelineSkill": 16384, "default": 12288, "none": ["docs/shipped-archive.md"] },
-  "auditEvery": 10
-}
+"QA_BUILD_CHECK": "curl -s https://household-qa.netlify.app/ | grep -o 'assets/index-[^\"]*\\.js' | head -1 | xargs -I{} curl -s https://household-qa.netlify.app/{} | grep -o '<sha>'",
+"TOKENS_PATH": "src/styles/tokens.css",
+"FRAMES": "Phone frames 402px wide (iPhone 17 Pro)",
+"flags": { "ui": true, "database": true, "delegation": true, "integration": true },
+"offLimits": [
+  { "pattern": "\\bsupabase\\b.*\\bdb\\s+push\\b", "label": "supabase db push" },
+  { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?gh(\\s|$)", "label": "gh" },
+  { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?netlify(\\s|$)", "label": "netlify" }
+]
+```
+
+Household had no `build-meta.json`, so its QA check finds the SHA inside the built bundle. A `build-meta.json` from the
+skeleton (`setup.md` › Skeleton) is simpler, and the same file answers `{{BUILD_VERIFY_METHOD}}`.
+
+## A sketch, as the spec records it
+
+The shape only; the card and its choices are made up for illustration.
+
+```markdown
+## Sketch
+
+Picked **B**, from `sketches/trip-create/form.html`: one screen with the date and trail together, over A's two-step flow.
+After feedback: the trail field moved above the date.
+Left to POC: tap targets, keyboard behavior, the empty-trail state.
+![option B](<uploaded screenshot>)
 ```

@@ -3,9 +3,17 @@
 Drafted 2026-10-31 from a read of `household` (main @ 5dd64d7), `PlaylistBot` (staging @ a5a6e94) and this repo
 (05d7221). Decisions settled with Danny the same day.
 
-**Status:** Part 1 is built on branch `harness-v2`. `kit/scaffold.test.mjs` passes 18 of 18. A scaffolded plugin
-installed into a throwaway config with the real CLI, and its harness check printed `Result: ok`. Not run yet: a live
-kickoff against real Linear, GitHub, Netlify and Supabase (1e's from-scratch dry run). Part 2 (mixtape) is next.
+**Status (2026-10-31):** Part 1 is built on branch `harness-v2` (PR #1).
+
+- **What changed after the plan:** `main` had already gained a Linear-specific, repo-embedded harness on 2026-09-15
+  (3812dba): seven per-stage skills, per-card doc fragments, and context economy. This clone never pulled it, so the
+  plan below doesn't account for it. Danny chose `main`'s design as the base.
+- **What this branch adds on top:** the kickoff setup steps, the six agents and their guard hooks, the plugin and
+  harness check, sketches at Scope, the maintenance path, and `template/scaffold.mjs` with its tests.
+- **Mixtape:** it already has `main`'s shape, so Part 2 is mostly adding those same pieces.
+
+Part 1 below describes the earlier single-skill kit, and is kept for the decisions. Where it disagrees with
+`.claude/skills/harness-onboarding/`, the skill wins.
 
 ## The vision
 

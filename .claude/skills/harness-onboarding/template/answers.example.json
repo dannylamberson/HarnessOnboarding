@@ -1,0 +1,33 @@
+{
+  "values": {
+    "PROJECT_NAME": "Trailhead",
+    "SLUG": "trailhead",
+    "USER": "Danny",
+    "DATE": "2026-10-31",
+    "LINEAR_WORKSPACE": "ddbbll",
+    "TEAM_NAME": "Trailhead",
+    "TEAM_KEY": "TRL",
+    "TYPE_LABELS": "`feature` · `bug` · `chore` · `polish` · `spike`",
+    "AREA_LABELS": "`area-ui` · `area-db` · `area-functions` · `area-infra` · `area-harness`",
+    "PROD_BRANCH": "main",
+    "INTEGRATION_BRANCH": "staging",
+    "BUILD_TEST_CMD": "npm run check",
+    "DEV_CMD": "npm run dev",
+    "RUNTIME_SECRETS_LOCATION": "the Netlify UI (site settings → environment variables, both sites)",
+    "QA_BUILD_CHECK": "curl -s \"https://trailhead-qa.netlify.app/build-meta.json?$(date +%s)\" | grep -o '\"commitRef\":\"[0-9a-f]*\"'",
+    "BUILD_VERIFY_METHOD": "Fetch `https://trailhead.example.com/build-meta.json?<timestamp>` and compare its `commitRef` with the pushed SHA. A mismatch after five minutes means the build failed.",
+    "DEPLOY_NOTE": "Pushing `main` is the production deploy: Netlify auto-publishes it.",
+    "ROOT_BUDGET": "15,000",
+    "TOKENS_PATH": "src/styles/tokens.css",
+    "FRAMES": "Phone frames 402px wide (iPhone 17 Pro)",
+    "DB_LOCAL_CHECK": "supabase db reset && supabase test db",
+    "DB_PUSH_CMD": "supabase db push",
+    "CONTEXT_BUDGET_CHECK": "After the fold, run `node .claude/scripts/context-size.mjs`. A file over budget gets split (`docs/harness-notes.md` › How to split) before the push."
+  },
+  "flags": { "ui": true, "database": true, "delegation": true, "integration": true },
+  "offLimits": [
+    { "pattern": "\\bsupabase\\b.*\\bdb\\s+push\\b", "label": "supabase db push" },
+    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?gh(\\s|$)", "label": "gh" },
+    { "pattern": "(^|[;&|(`]\\s*)(npx\\s+)?netlify(\\s|$)", "label": "netlify" }
+  ]
+}
