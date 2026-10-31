@@ -106,6 +106,8 @@ const harness = {
   offLimits: answers.offLimits ?? [],
   budgets: { root: 15000, claudeMd: 12000, skill: 12000, files: { 'docs/pipeline-core.md': 24000 }, ...answers.budgets },
   auditEvery: answers.auditEvery ?? 10,
+  ...(answers.audit && { audit: answers.audit }),
+  ...(answers.pointersSkip && { pointersSkip: answers.pointersSkip }),
 }
 write('.claude/harness.json', `${JSON.stringify(harness, null, 2)}\n`)
 

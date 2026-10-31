@@ -16,6 +16,8 @@ The answers file has three parts (`answers.example.json` shows every key):
 - **`flags`**: `ui` (sketches at Scope), `database` (migration rules), `delegation` (the agents and guards), `integration` (a long-lived integration branch that the QA runner may push). Each defaults to true. A `<!-- if:flag -->` … `<!-- endif -->` block is kept only when its flag matches, and the files that belong to a flag are dropped when it's off.
 - **`offLimits`**: a regex `pattern` and a `label` per command no subagent may run (the deploy CLI, the database push, `gh`). `git push` is always refused to the builder; the QA runner may push only the integration branch.
 
+Two optional keys pass straight into `harness.json`: `audit` (`notes`, `history`, `everyShips`, `everyDays`: the audit cadence the context check reports, by ships since the last audit, days, or both) and `pointersSkip` (path prefixes whose pointers aren't checked, such as dated specs).
+
 It writes `.claude/harness.json` from these, appends the gitignore stanza once, never overwrites an existing file (it lists those for a hand merge), and lists every placeholder left by file and line. After changing anything in this folder, run `node scaffold.test.mjs`.
 
 ## What gets copied where

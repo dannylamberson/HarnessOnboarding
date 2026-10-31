@@ -4,7 +4,7 @@
 // `git fetch`. Registered (the helpers in the session's agent list) only the session can see, so the script says what
 // to look for. Names come from the plugin manifests and `.claude/harness.json`, so the script has no placeholders.
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -47,8 +47,17 @@ else {
 const pluginOk = !plugin
 console.log(`Plugin: ${pluginOk ? `ok, ${PLUGIN} from ${root}` : plugin}`)
 
+const agents = (() => {
+  try {
+    return readdirSync(join(root, '.claude/agents')).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3))
+  } catch {
+    return []
+  }
+})()
 console.log(
-  `Registered: check your Agent tool lists ${pluginName}:builder and ${pluginName}:qa-runner (or builder and qa-runner).`,
+  agents.length
+    ? `Registered: check your Agent tool lists ${agents.map((a) => `${pluginName}:${a}`).join(', ')} (or the same without the prefix).`
+    : 'Registered: no agents in .claude/agents/ (single-model harness).',
 )
 
 // Clone fresh: what the production branch changed in `.claude/` since this checkout's merge base.

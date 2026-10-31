@@ -25,8 +25,10 @@ Over budget: <file, size / budget>, or none
 Broken pointers: <file:line, target>, or none
 Fragments: <ok | missing | shared doc edited: file | not deleted after fold: file>
 Duplicates: <the line, and both files>, or none
-Audit due: yes or no (<N> ships since the last audit)
+Audit due: yes or no (the script's cadence line)
 ```
 
-FAIL means something is over budget, a pointer is broken, or the fragment check failed. Duplicates are reported but
+FAIL means a file **this change touched** is over budget or has a broken pointer, or the fragment check failed.
+An OVER or a broken pointer in a file the change didn't touch is pre-existing debt: list it with "(pre-existing)",
+and it doesn't fail the check. Duplicates are reported but
 don't fail the check. "Audit due" is yes when the script says so.

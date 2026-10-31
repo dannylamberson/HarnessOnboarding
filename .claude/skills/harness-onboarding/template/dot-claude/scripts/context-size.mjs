@@ -1,6 +1,6 @@
 // The context check (`node .claude/scripts/context-size.mjs`): every budgeted context file against its budget, every
 // backticked `.md` path that doesn't resolve, and how many cards shipped since the last harness audit. Budgets come
-// from `.claude/harness.json` › budgets, the numbers `docs/harness-notes.md` › Token budget targets states:
+// from `.claude/harness.json` › budgets, the numbers the harness notes state (Token budget targets):
 //   root       root CLAUDE.md                       loaded every session
 //   claudeMd   every other CLAUDE.md                loaded with its folder
 //   skill      .claude/skills/*/SKILL.md and agents  loaded when their stage or agent runs
@@ -52,9 +52,11 @@ for (const p of files) {
   }
 }
 
-// Pointers: a backticked path ending in `.md` must exist, from the repo root or from the file's own folder.
+// Pointers: a backticked path ending in `.md` must exist, from the repo root or from the file's own folder. Paths in
+// harness.json › pointersSkip (prefixes, e.g. dated specs that describe a past layout) aren't checked.
+const skipPointers = config.pointersSkip ?? []
 const broken = []
-for (const p of files) {
+for (const p of files.filter((f) => !skipPointers.some((prefix) => f.startsWith(prefix)))) {
   read(p)
     .split('\n')
     .forEach((line, i) => {
@@ -69,11 +71,29 @@ if (broken.length) {
   console.log(`\nBroken pointers:\n${broken.map((b) => `  ${b}`).join('\n')}`)
 } else console.log('\nBroken pointers: none')
 
-// Ships since the last audit: `**Shipped:** <date>` entries in feature-history after harness-notes' last audit date.
+// The audit cadence, from `.claude/harness.json` › audit: the date on the notes file's `**Last full audit:**` line, then
+// ships since it (`**Shipped:** <date>` entries in the history file) and/or days since it. Either one reaching its
+// number says an audit is due; set one to null to skip it.
+const audit = {
+  notes: 'docs/harness-notes.md',
+  history: 'docs/feature-history.md',
+  everyShips: config.auditEvery ?? 10,
+  everyDays: null,
+  ...config.audit,
+}
 const dates = (p, re) => (existsSync(join(root, p)) ? [...read(p).matchAll(re)].map((m) => m[1]) : [])
-const lastAudit = dates('docs/harness-notes.md', /\*\*Last full audit:\*\* (\d{4}-\d{2}-\d{2})/g).sort().at(-1) ?? '0000-00-00'
-const ships = dates('docs/feature-history.md', /\*\*Shipped:\*\* (\d{4}-\d{2}-\d{2})/g).filter((d) => d > lastAudit)
-const every = config.auditEvery ?? 10
-console.log(`Ships since the last audit: ${ships.length} (audit due at ${every})${ships.length >= every ? ' — AUDIT DUE' : ''}`)
+const lastAudit = dates(audit.notes, /\*\*Last full audit:(?:\*\*)?\s*(\d{4}-\d{2}-\d{2})/g).sort().at(-1)
+let due = false
+if (audit.everyShips !== null) {
+  const ships = dates(audit.history, /\*\*Shipped:\*\* (\d{4}-\d{2}-\d{2})/g).filter((d) => d > (lastAudit ?? ''))
+  due ||= ships.length >= audit.everyShips
+  console.log(`Ships since the last audit: ${ships.length} (audit due at ${audit.everyShips})`)
+}
+if (audit.everyDays !== null) {
+  const days = lastAudit ? Math.floor((Date.now() - Date.parse(lastAudit)) / 86400000) : Infinity
+  due ||= days >= audit.everyDays
+  console.log(`Days since the last audit (${lastAudit ?? 'none recorded'}): ${days} (audit due at ${audit.everyDays})`)
+}
+console.log(`Audit due: ${due ? 'yes' : 'no'}`)
 
 process.exit(failed ? 1 : 0)
