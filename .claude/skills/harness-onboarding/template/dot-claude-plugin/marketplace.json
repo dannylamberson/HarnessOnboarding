@@ -1,0 +1,12 @@
+{
+  "name": "{{SLUG}}-local",
+  "owner": { "name": "{{USER}}" },
+  "description": "This clone's {{PROJECT_NAME}} harness, installed per machine",
+  "plugins": [
+    {
+      "name": "{{SLUG}}",
+      "source": "./.claude",
+      "description": "The {{PROJECT_NAME}} pipeline's agents, guard hooks and skills, loaded from this clone"
+    }
+  ]
+}
